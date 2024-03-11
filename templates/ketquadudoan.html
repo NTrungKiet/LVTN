@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 model-container border rounded p-3">
+    <h2 class="text-center">Kết Quả Dự Đoán</h2>
+     <!-- Hiển thị thông tin kết quả -->
+    <div class="result-info mt-4 model-container border rounded p-3">
+        <label for="rowCountInput">Số Lượng  Hiển Thị:</label>
+        <input type="number" id="rowCountInput" min="1" step="1" value="10" max="{{num_rows}}">
+        <button onclick="updateTable()" class="btn btn-primary">Xác nhận</button>
+        <table class="table">
+            <thead>
+                <tr>
+                    {% for col in customer.columns %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Sử dụng data attributes để lưu trữ dữ liệu -->
+                {% for index, row in customer.iterrows() %}
+                    <tr class="data-row">
+                        {% for col in customer.columns %}
+                            <td>{{ row[col] }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Hàm được gọi khi trang được load
+window.onload = function() {
+    // Mặc định hiển thị chỉ 10 dòng
+    showOnlyNRows(10);
+};
+
+// Hàm hiển thị chỉ số hàng được nhập vào và ẩn phần còn lại
+function showOnlyNRows(n) {
+    var dataRows = document.getElementsByClassName('data-row');
+
+    for (var i = 0; i < dataRows.length; i++) {
+        if (i < n) {
+            dataRows[i].style.display = 'table-row';
+        } else {
+            dataRows[i].style.display = 'none';
+        }
+    }
+}
+
+// Hàm cập nhật bảng khi người dùng nhập giá trị và nhấn nút
+function updateTable() {
+    var rowCount = document.getElementById('rowCountInput').value;
+    showOnlyNRows(rowCount);
+}
+</script>
+
+{% endblock %}

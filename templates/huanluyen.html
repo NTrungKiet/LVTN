@@ -1,0 +1,475 @@
+{% extends "base.html"%}
+{% block content %}
+
+    <div class="container mt-5 model-container border rounded p-3">
+        <h2>Huấn Luyện Mô Hình</h2>
+        <form id="modelForm" method="POST" enctype="multipart/form-data" action="#">
+            <div class="form-group">
+                <label for="modelSelect"><h5>Chọn Giải Thuật:</h5></label>
+                <select class="form-control" id="modelSelect" name="modelSelect" onchange="toggleFileInputs()">
+                    <option value="decisionTree">Cây Quyết Định</option>
+                    <option value="brnn">BRNN</option>
+                    <option value="lstm">LSTM</option>
+                </select>
+            </div>
+
+            <!-- File input for Decision Tree -->
+            <div class="form-group" id="decisionTreeFile">
+                <label for="csvFile"><h5>Chọn File CSV (Cây Quyết Định):</h5></label>
+                <input type="file" class="form-control-file" id="csvFile" name="csvFile" accept=".csv">
+
+                <!-- Customization options for Decision Tree -->
+                <div class="form-group mt-2">
+                    <label for="modelOptions"><h5>Chọn Mô Hình Sử Dụng:</h5></label>
+                    <select class="form-control" id="modelOptions" name="modelOptions" onchange="toggleCustomOptions()">
+                        <option value="none">Mặc Định</option>
+                        <option value="adjust">Tùy Chỉnh Tham Số</option>
+                        <option value="available">Sử Dụng Mô Hình Sẵn Có</option>
+                    </select>
+                </div>
+                <!-- <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="customOptionsCheckbox" onchange="toggleCustomOptions()">
+                    <label class="form-check-label" for="customOptionsCheckbox">
+                        Tùy Chỉnh Mô Hình
+                    </label>
+                </div> -->
+
+                <div id="customOptions" class="model-container border rounded p-3" style="display: none;" >
+                    <h5>Thông Số Tùy Chỉnh</h5>
+                    <div class="form-group">
+                        <label for="criterion">Criterion:</label>
+                        <input type="text" class="form-control" id="criterion" name="criterion" value="gini">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxDepth">Max Depth:</label>
+                        <input type="text" class="form-control" id="maxDepth" name="maxDepth" value="None">
+                    </div>
+                    <div class="form-group">
+                        <label for="minSamplesSplit">Min Samples Split:</label>
+                        <input type="number" class="form-control" id="minSamplesSplit" name="minSamplesSplit" value=2>
+                    </div>
+                    <div class="form-group">
+                        <label for="minSamplesLeaf">Min Samples Leaf:</label>
+                        <input type="number" class="form-control" id="minSamplesLeaf" name="minSamplesLeaf" value=1>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxFeatures">Max Features:</label>
+                        <input type="text" class="form-control" id="maxFeatures" name="maxFeatures" value="None">
+                    </div>
+                    <div class="form-group">
+                        <label for="classWeight">Class Weight:</label>
+                        <input type="text" class="form-control" id="classWeight" name="classWeight" value="None">
+                    </div>
+                    <div class="form-group">
+                        <label for="randomState">Random State:</label>
+                        <input type="text" class="form-control" id="randomState" name="randomState" value="None">
+                    </div>
+                </div>
+
+                <div id="uploadOptions" class="model-container border rounded p-3" style="display: none;">
+                    <h5>Chọn mô hình</h5>
+                    <label for="Model">Mô Hình (.joblid, pkl):</label>
+                    <input type="file" class="form-control-file" id="Model" name="Model" accept=".joblib, .pkl">
+                </div>
+            </div>
+
+            <!-- File inputs for BRNN or LSTM -->
+            <div class="form-group" id="brnnLstmFiles" style="display: none;">
+                <label for="lulFile">Chọn File CSV (Lưu Lượng):</label>
+                <input type="file" class="form-control-file" id="lulFile" name="lulFile" accept=".csv">
+                
+                <label for="thanhLyFile">Chọn File CSV (Thanh Lý):</label>
+                <input type="file" class="form-control-file" id="thanhLyFile" name="thanhLyFile" accept=".csv">
+
+                <!-- Customization options for BRNN or LSTM -->
+                <div class="form-group mt-2">
+                    <label for="modelBRNNOptions"><h5>Chọn Mô Hình Sử Dụng:</h5></label>
+                    <select class="form-control" id="modelBRNNOptions" name="modelBRNNOptions" onchange="toggleBRNNCustomOptions()">
+                        <option value="none">Mặc Định</option>
+                        <option value="adjust">Tùy Chỉnh Tham Số</option>
+                        <option value="available">Sử Dụng Mô Hình Sẵn Có</option>
+                    </select>
+                </div>
+                <!-- <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="customBRNNLSTMCheckbox" onchange="toggleBRNNLSTMCustomOptions()">
+                    <label class="form-check-label" for="customBRNNLSTMCheckbox">
+                        Tùy Chỉnh Mô Hình
+                    </label>
+                </div> -->
+                <div id="numEpochs_All" class="mb-3">
+                    <div class="form-group ml-1 row align-items-center">
+                        <label for="numEpochs" class="col-sm-2 col-form-label">Số Lượng Epochs:</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control col-2" id="numEpochs" name="numEpochs" value=10 size="1">
+                        </div>
+                    </div>
+                
+                    <div class="form-group ml-1 row align-items-center">
+                        <label for="threshold_up" class="col-sm-2 col-form-label">Ngưỡng Dự Đoán UP:</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control col-2" id="threshold_up" name="threshold_up" value="None">
+                        </div>
+                    </div>
+                    <div class="form-group ml-1 row align-items-center">
+                        <label for="threshold_down" class="col-sm-2 col-form-label">Ngưỡng Dự Đoán DOWN:</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control col-2" id="threshold_down" name="threshold_down" value="None">
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="brnnCustomOptions" class="model-container border rounded p-3" style="display: none;" class="mb-4">
+                    <div class="form-group row align-items-center">
+                        <label for="numEpochs" class="col-sm-4 col-form-label">Số Lượng Epochs:</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" id="numEpochs" name="numEpochs" value=10>
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="numBatchSize" class="col-sm-4 col-form-label">BatchSize:</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" id="numBatchSize" name="numBatchSize" value=32>
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="threshold" class="col-sm-4 col-form-label">Ngưỡng:</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="threshold" name="threshold" value="None">
+                        </div>
+                    </div>
+                    <h5 class="mt-3">Số Ngày Huấn Luyện & Dự Đoán:</h5>
+                    <div class="form-group row align-items-center">
+                        <label for="numberOfTrainingDays" class="col-sm-4 col-form-label">Số Ngày Huấn Luyện:</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" id="numberOfTrainingDays" name="numberOfTrainingDays" value=7>
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="PredictedNumberOfDays" class="col-sm-4 col-form-label">Số Ngày Dự Đoán:</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" id="PredictedNumberOfDays" name="PredictedNumberOfDays" value=3>
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="slidingWindow" class="col-sm-4 col-form-label">Số Ngày Trượt:</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" id="slidingWindow" name="slidingWindow" value=1>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">Thông Số Tùy Chỉnh:</h5>
+                    <div class="form-group row align-items-center">
+                        <label for="layerType" class="col-sm-4 col-form-label">Loại Layer:</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" id="layerType" name="layerType">
+                                <option value="LSTM">LSTM</option>
+                                <option value="RNN">RNN</option>
+                                <option value="Dense">Dense</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="numNodes" class="col-sm-4 col-form-label">Số Lượng Nodes:</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" id="numNodes" name="numNodes" value=64>
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="activationFunction" class="col-sm-4 col-form-label">Hàm Kích Hoạt:</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="activationFunction" name="activationFunction" value="tanh">
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="dropout" class="col-sm-4 col-form-label">Dropout:</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="dropout" name="dropout" value=0>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-primary mt-3" onclick="addBRNNLayer()">Thêm Layer</button>
+                    </div>
+                </div>    
+                <div id="uploadbrnnOptions" class="model-container border rounded p-3" style="display: none;">
+                    <h5>Chọn mô hình</h5>
+                    <label for="upModel">Mô Hình UP (.h5):</label>
+                    <input type="file" class="form-control-file" id="upModel" name="upModel" accept=".h5">
+        
+                    <label for="downModel">Mô Hình DOWN (.h5):</label>
+                    <input type="file" class="form-control-file" id="downModel" name="downModel" accept=".h5">
+                </div>
+            </div>
+            <!-- Thêm checkbox -->
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="downloadCheckbox" name="downloadCheckbox">
+                <label class="form-check-label" for="downloadCheckbox">
+                    Tải Mô Hình về Máy
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3 mb-5">Huấn Luyện</button>
+            
+        </form>
+    </div>
+    
+
+<!-- Bootstrap JS and dependencies -->
+<!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script> -->
+
+<script>
+    function toggleFileInputs() {
+        var modelSelect = document.getElementById("modelSelect");
+        var decisionTreeFile = document.getElementById("decisionTreeFile");
+        var brnnLstmFiles = document.getElementById("brnnLstmFiles");
+
+        if (modelSelect.value === "decisionTree") {
+            decisionTreeFile.style.display = "block";
+            brnnLstmFiles.style.display = "none";
+        } else {
+            decisionTreeFile.style.display = "none";
+            brnnLstmFiles.style.display = "block";
+        }
+
+        // Reset custom options when changing the model
+        resetCustomOptions();
+        resetBRNNCustomOptions();
+    }
+
+    function toggleCustomOptions(){
+        var modelOptions = document.getElementById("modelOptions");
+        var customOptions = document.getElementById("customOptions");
+        var uploadOptions = document.getElementById("uploadOptions");
+
+        if(modelOptions.value === "none"){
+            customOptions.style.display = "none";
+            uploadOptions.style.display = "none";
+        }
+        else if (modelOptions.value === "adjust") {
+            customOptions.style.display = "block";
+            uploadOptions.style.display = "none";
+        } else {
+            customOptions.style.display = "none";
+            uploadOptions.style.display = "block";
+        }
+    }
+
+    // function toggleCustomOptions() {
+    //     var customOptionsCheckbox = document.getElementById("customOptionsCheckbox");
+    //     var customOptions = document.getElementById("customOptions");
+
+    //     if (customOptionsCheckbox.checked) {
+    //         customOptions.style.display = "block";
+    //     } else {
+    //         customOptions.style.display = "none";
+    //     }
+    // }
+
+    function resetCustomOptions() {
+        var modelOptions = document.getElementById("modelOptions");
+        var customOptions = document.getElementById("customOptions");
+        var uploadOptions = document.getElementById("uploadOptions");
+
+        modelOptions.value = 'none';
+        customOptions.style.display = "none";
+        uploadOptions.style.display = "none";
+        
+        // var customOptionsCheckbox = document.getElementById("customOptionsCheckbox");
+        // var customOptions = document.getElementById("customOptions");
+
+        // customOptionsCheckbox.checked = false;
+        // customOptions.style.display = "none";
+
+        // Reset input values
+        // var inputs = customOptions.getElementsByTagName("input");
+        // for (var i = 0; i < inputs.length; i++) {
+        //     inputs[i].value = "";
+        // }
+    }
+
+    function toggleBRNNCustomOptions() {
+        var modelBRNNOptions = document.getElementById("modelBRNNOptions");
+        var customBRNNOptions = document.getElementById("brnnCustomOptions");
+        var uploadBRNNOptions = document.getElementById("uploadbrnnOptions");
+        var numEpochs_All = document.getElementById("numEpochs_All");
+        var numEpochs = document.getElementById("numEpochs");
+
+        if(modelBRNNOptions.value === "none"){
+            customBRNNOptions.style.display = "none";
+            uploadBRNNOptions.style.display = "none";
+            numEpochs_All.style.display = "";
+        }
+        else if (modelBRNNOptions.value === "adjust") {
+            customBRNNOptions.style.display = "block";
+            uploadBRNNOptions.style.display = "none";
+            numEpochs_All.style.display = "none";
+
+        } else {
+            customBRNNOptions.style.display = "none";
+            uploadBRNNOptions.style.display = "block";
+            numEpochs_All.style.display = "";
+
+        }        
+
+        // var customBRNNLSTMCheckbox = document.getElementById("customBRNNLSTMCheckbox");
+        // var brnnLstmCustomOptions = document.getElementById("brnnLstmCustomOptions");
+
+        // if (customBRNNLSTMCheckbox.checked) {
+        //     brnnLstmCustomOptions.style.display = "block";
+        // } else {
+        //     brnnLstmCustomOptions.style.display = "none";
+        // }
+    }
+
+    function resetBRNNCustomOptions() {
+        var modelBRNNOptions = document.getElementById("modelBRNNOptions");
+        var customBRNNOptions = document.getElementById("brnnCustomOptions");
+        var uploadBRNNOptions = document.getElementById("uploadbrnnOptions");
+
+        modelBRNNOptions.value = 'none';
+        customBRNNOptions.style.display = "none";
+        uploadBRNNOptions.style.display = "none";
+        
+        // var customBRNNLSTMCheckbox = document.getElementById("customBRNNLSTMCheckbox");
+        // var brnnLstmCustomOptions = document.getElementById("brnnLstmCustomOptions");
+
+        // customBRNNLSTMCheckbox.checked = false;
+        // brnnLstmCustomOptions.style.display = "none";
+
+        // Reset input values
+        // var inputs = brnnLstmCustomOptions.getElementsByTagName("input");
+        // for (var i = 0; i < inputs.length; i++) {
+        //     inputs[i].value = "";
+        // }
+        // // Reset select value
+        // var selects = brnnLstmCustomOptions.getElementsByTagName("select");
+        // for (var i = 0; i < selects.length; i++) {
+        //     selects[i].value = selects[i].options[0].value;
+        // }
+    }
+
+    function addBRNNLayer() {
+        var brnnLstmCustomOptions = document.getElementById("brnnCustomOptions");
+
+        var newLayerDiv = document.createElement("div");
+        newLayerDiv.className = "form-group row align-items-center"; 
+
+        // Label và Select cho Loại Layer
+        var layerTypeLabel = document.createElement("label");
+        layerTypeLabel.textContent = "Loại Layer:";
+        layerTypeLabel.className = "col-sm-4 col-form-label";
+        layerTypeLabel.for = "layerType";
+        newLayerDiv.appendChild(layerTypeLabel);
+
+        var divSelect = document.createElement("div")
+        divSelect.className = "col-sm-8";
+        var layerTypeSelect = document.createElement("select");
+        layerTypeSelect.className = "form-control";
+        layerTypeSelect.innerHTML = '<option value="LSTM">LSTM</option><option value="RNN">RNN</option><option value="Dense">Dense</option>';
+        layerTypeSelect.id = "layerType";
+        layerTypeSelect.name = "layerType";
+        divSelect.appendChild(layerTypeSelect);
+        newLayerDiv.appendChild(divSelect);
+
+
+        // Label và Input cho Số Lượng Nodes
+
+        var newLayerDivNodes = document.createElement("div");
+        newLayerDivNodes.className = "form-group row align-items-center";
+        var numNodesLabel = document.createElement("label");
+        numNodesLabel.textContent = "Số Lượng Nodes:";
+        numNodesLabel.className = "col-sm-4 col-form-label"; 
+        numNodesLabel.for = "numNodes";
+        newLayerDivNodes.appendChild(numNodesLabel);
+        
+        var divNodes = document.createElement("div")
+        divNodes.className = "col-sm-8"; 
+        var numNodesInput = document.createElement("input");
+        numNodesInput.type = "number";
+        numNodesInput.className = "form-control"; 
+        numNodesInput.id = "numNodes";
+        numNodesInput.name = "numNodes";
+        numNodesInput.value = 64;
+        divNodes.appendChild(numNodesInput);
+        newLayerDivNodes.appendChild(divNodes)
+        
+        // Label và Input cho Hàm Kích Hoạt
+        var newLayerDivfunction = document.createElement("div");
+        newLayerDivfunction.className = "form-group row align-items-center"
+        var activationFunctionLabel = document.createElement("label");
+        activationFunctionLabel.textContent = "Hàm Kích Hoạt:";
+        activationFunctionLabel.className = "col-sm-4 col-form-label"; 
+        activationFunctionLabel.for = "activationFunction";
+        newLayerDivfunction.appendChild(activationFunctionLabel);
+
+        var divFunction = document.createElement("div");
+        divFunction.className = "col-sm-8";
+        var activationFunctionInput = document.createElement("input");
+        activationFunctionInput.type = "text";
+        activationFunctionInput.className = "form-control"; 
+        activationFunctionInput.id = "activationFunction";
+        activationFunctionInput.name = "activationFunction";
+        activationFunctionInput.value = "tanh";
+        divFunction.appendChild(activationFunctionInput);
+        newLayerDivfunction.appendChild(divFunction);
+
+        // Label và Input cho Hàm Kích Hoạt
+        var newLayerDropout = document.createElement("div");
+        newLayerDropout.className = "form-group row align-items-center"
+        var dropoutlabel = document.createElement("label");
+        dropoutlabel.textContent = "Dropout:";
+        dropoutlabel.className = "col-sm-4 col-form-label"; 
+        dropoutlabel.for = "dropout";
+        newLayerDropout.appendChild(dropoutlabel);
+
+        var Dropout = document.createElement("div");
+        Dropout.className = "col-sm-8";
+        var dropoutInput = document.createElement("input");
+        dropoutInput.type = "text";
+        dropoutInput.className = "form-control"; 
+        dropoutInput.id = "dropout";
+        dropoutInput.name = "dropout";
+        dropoutInput.value = 0;
+        Dropout.appendChild(dropoutInput);
+        newLayerDropout.appendChild(Dropout);
+
+        // Button "Xóa Layer"
+        var removeLayerButton = document.createElement("button");
+        removeLayerButton.type = "button";
+        removeLayerButton.className = "btn btn-danger mt-3 ml-3";
+        removeLayerButton.textContent = "Xóa Layer";
+        removeLayerButton.onclick = function () {
+            removeLayer(newLayerDiv);
+            removeLayer(newLayerDivNodes);
+            removeLayer(newLayerDropout);
+            removeLayer(newLayerDivfunction);
+        };
+        newLayerDropout.appendChild(removeLayerButton);
+
+        // Insert the new layer before the "Thêm Layer" button
+        var addButton = brnnLstmCustomOptions.querySelector("button.btn-primary");
+        brnnLstmCustomOptions.insertBefore(newLayerDiv, addButton.parentNode);
+        brnnLstmCustomOptions.insertBefore(newLayerDivNodes, addButton.parentNode);
+        brnnLstmCustomOptions.insertBefore(newLayerDivfunction, addButton.parentNode);
+        brnnLstmCustomOptions.insertBefore(newLayerDropout, addButton.parentNode);
+
+
+
+    }   
+
+function removeLayer(layerToRemove) {
+    var brnnLstmCustomOptions = document.getElementById("brnnCustomOptions");
+    var layers = brnnLstmCustomOptions.getElementsByClassName("form-group row align-items-center");
+    
+    // Đảm bảo layerToRemove thuộc về brnnLstmCustomOptions
+    if (brnnLstmCustomOptions.contains(layerToRemove) && layers.length > 1) {
+        brnnLstmCustomOptions.removeChild(layerToRemove);
+    }
+}
+
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html"%}
+{% block content %}
+
+    <div class="container mt-5 model-container border rounded p-3">
+        <h2 class="text-center">Kết Quả Huấn Luyện Mô Hình</h2>
+        
+        <!-- Hiển thị thông tin kết quả -->
+        <div class="result-info mt-4 model-container border rounded p-3">
+            <h5 class="font-weight-bold">Mô Hình đã được huấn luyện thành công!</h5>
+            {% if mae|length != 0 %}
+                <h6>Đánh giá hiệu suất mô hình: </h6>
+                <table class="table table-bordered mt-4 text-center">
+                    <thead class="thead-light">
+                        <tr>
+                            <th scope="col">Mô Hình upload</th>
+                            <th scope="col">Mô Hình download</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{mae[0]}}(gb)</td>
+                            <td>{{ mae[1]}}(gb)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            {% endif %}
+            <h6>Đánh giá kết quả dự đoán:</h6>
+            <table class="table table-bordered mt-4 text-center">
+                <thead class="thead-light">
+                    <tr>
+                        <th scope="col">Tên Đánh Giá</th>
+                        <th scope="col">Giá Trị</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Accuracy</td>
+                        <td>{{ result[0] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Precision</td>
+                        <td>{{ result[1] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Recall</td>
+                        <td>{{ result[2] }}</td>
+                    </tr>
+                    <tr>
+                        <td>F1 Score</td>
+                        <td>{{ result[3] }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="model-container border rounded p-3">
+                <h5>Matrix Chart</h5>
+                <div class="col-md-4 offset-md-3" id="matrix-container"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+// Mô phỏng dữ liệu ma trận
+const matrixData = [["", "1", "0"], ["1", "{{ c_matrix[0][0]}}", "{{ c_matrix[0][1]}}"], ["0", "{{ c_matrix[1][0]}}", "{{ c_matrix[1][1]}}"]];
+
+// Kích thước của ma trận
+const rows = matrixData.length;
+const cols = matrixData[0].length;
+
+const diagonalValues = matrixData.map((row, i) => row[i]).slice(1); // Lấy giá trị từ hàng và bỏ qua giá trị đầu tiên (dòng đầu tiên)
+// Thiết lập chiều rộng và chiều cao cho ô ma trận
+const cellSize = 150;
+const width = cols * cellSize;
+const height = rows * cellSize;
+
+// Tạo SVG để vẽ biểu đồ
+const svg = d3.select("#matrix-container")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+// Tạo mảng để chứa các giá trị của đường chéo
+
+// Tạo các ô trong ma trận
+const cells = svg.selectAll("rect")
+    .data(matrixData.flat())
+    .enter()
+    .append("rect")
+    .attr("width", cellSize)
+    .attr("height", cellSize)
+    .attr("x", (d, i) => (i % cols) * cellSize)
+    .attr("y", (d, i) => Math.floor(i / cols) * cellSize)
+    .attr("fill", (d, i) => {
+        if(i === 0){
+            return "none";
+        }
+        if ((i % cols === 0 && i > 0) || i<cols) {
+            return d3.scaleSequential(d3.interpolateBlues).domain([1.2, 1.2])(d);
+        }
+        else{
+
+            return d3.scaleSequential(d3.interpolateBlues).domain([50, d3.max(matrixData.flat()) * 50])(d);
+        }
+    })
+    .attr("stroke", "white");
+
+// Hiển thị giá trị trong từng ô
+svg.selectAll("text")
+    .data(matrixData.flat())
+    .enter()
+    .append("text")
+    .text(d => d)
+    .attr("x", (d, i) => (i % cols) * cellSize + cellSize / 2)
+    .attr("y", (d, i) => Math.floor(i / cols) * cellSize + cellSize / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", "middle")
+    .attr("fill", (d, i) => (i === 0 || (i % cols === 0 && i > 0)) ? "black" : "black");
+
+    </script>
+{% endblock %}
